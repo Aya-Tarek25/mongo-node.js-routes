@@ -1,0 +1,83 @@
+const TodoController = require('../controllers/TodoController');
+const express = require('express');
+const route = express.Router();
+const bcrypt = require('bcrypt');
+const Todo = require("../models/todo");
+
+route.get('/', (req, res) => {
+    res.send('you are todo route')
+})
+//create nwe todo
+route.post('/createtodo', async (req, res) => {
+    try{
+    let {userName,title,tags} = req.body;
+        let data = await TodoController.createTodo(userName,title,tags)
+        console.log(data);
+        res.send(`todo created successfully`);
+    }
+
+    catch (e) {
+        res.status(500).send('server error')
+    }
+})
+
+//get todo by userid
+route.get("/getTodos/:userid", async (req, res) => {
+    try {
+        const id = req.params.userid;
+        let data = await TodoController.getTodos(id);
+        console.log("Todo Details:", data);
+
+        if (data !== "error") {
+            res.send(data);
+        } else {
+            
+            res.status(404).send("Todo not found");
+        }
+    } catch (e) {
+        
+        res.status(500).send('Server error');
+    }
+});
+
+
+
+route.patch("/editTodo/:id", async (req, res) => {
+    try {
+        const id=req.params.id;
+        const {title}= req.body;
+        let data = await TodoController.editTodo(id,title);
+       // console.log(data);
+        if (data != "error") {
+             res.send(`Todo was edited:${data}`);  
+        }
+        else {
+            res.status(403).send("not found")
+        }
+    }
+
+    catch (e) {
+        res.status(500).send('server error')
+    }
+
+})
+route.delete("/deleteTodo/:id", async (req, res) => {
+    try {
+        const id = req.params.id;
+        let data = await TodoController.deleteTodo(id);
+        console.log("Delete Todo:", data);
+
+        if (data !== "error") {
+            res.send(data);
+        } else {
+            
+            res.status(404).send("Todo not found");
+        }
+    } catch (e) {
+        
+        res.status(500).send('Server error');
+    }
+});
+
+
+module.exports = route;

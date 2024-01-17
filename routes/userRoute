@@ -1,0 +1,141 @@
+const userController = require('../controllers/UserController');
+const express = require('express');
+const route = express.Router();
+const bcrypt = require('bcrypt');
+const User = require("../models/User");
+
+route.get('/', (req, res) => {
+    res.send('you are in user route')
+})
+
+//add new user
+route.post('/register', async (req, res) => {
+    try{
+    let { userName, password, firstName } = req.body;
+    bcrypt.hash(password, 10, async function (err, hash) {
+        let data = await userController.Register(userName,hash,firstName)
+        console.log(data);
+        res.send(`user was registered successfully`);
+    });
+}
+
+    catch (e) {
+        res.status(500).send('server error')
+    }
+
+
+})
+
+
+
+route.post('/login', async (req, res) => {
+    try {
+        const { userName, password } = req.body;
+        const user = await User.findOne({userName:userName});
+        console.log(user);
+        // Compare  password with the hashed 
+        const Matchuser = await bcrypt.compare(password, user.password);
+        if (Matchuser) {
+            let data = await userController.Login(userName,password)
+            return res.send('Logged in successfully');
+        } else {
+            return res.status(401).send('Invalid credentials');
+        }
+    } catch (e) {
+        
+        return res.status(500).send('Server error');
+    }
+});
+
+
+route.get("/getAllUsers", async (req, res) => {
+    try {
+        let data = await userController.getAllUsers();
+       // console.log(data);
+        if (data != "error") {
+            res.json({
+                users: data,
+                msg: "ok",
+                status: 200
+            });
+        }
+        else {
+            res.status(403).send("not found")
+        }
+    }
+
+    catch (e) {
+        res.status(500).send('server error')
+    }
+
+})
+
+
+
+route.delete("/deleteUser/:userName", async (req, res) => {
+    try {
+        const userName= req.params.userName;
+        let data = await userController.deleteUser(userName);
+       // console.log(data);
+        if (data != "error") {
+             res.send('deleted successfully');  
+        }
+        else {
+            res.status(403).send("not found")
+        }
+    }
+
+    catch (e) {
+        res.status(500).send('server error')
+    }
+
+})
+
+
+
+
+route.patch("/editUser", async (req, res) => {
+    try {
+        
+        const {userName,newuserName,password,firstName}= req.body;
+        bcrypt.hash(password, 10, async function (err, hash) {
+        let data = await userController.editUser(userName,newuserName,hash,firstName);
+       // console.log(data);
+        if (data != "error") {
+             res.send(`user was edited successfully, user:${data}`);  
+        }
+        else {
+            res.status(403).send("not found")
+        }
+    });
+    }
+
+    catch (e) {
+        res.status(500).send('server error')
+    }
+
+})
+route.patch("/editUserwithname/:userName", async (req, res) => {
+    try {
+        const userName = req.params.userName;
+        const { newuserName, password, firstName } = req.body;
+        bcrypt.hash(password, 10, async function (err, hash) {
+       let data = await userController.editUser(userName, newuserName, hash, firstName);
+       console.log("Edit User Result:", data);
+       // console.log(data);
+        if (data != "error") {
+             res.send(`user was edited successfully, user:${data}`);  
+        }
+        else {
+            res.status(403).send("not found")
+        }
+    });
+    }
+
+    catch (e) {
+        res.status(500).send('server error')
+    }
+
+})
+
+module.exports = route;
